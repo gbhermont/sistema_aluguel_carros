@@ -1,4 +1,4 @@
-import { STATUS_LABEL } from '../services/mockData.js'
+import { STATUS_LABEL } from '../services/format.js'
 
 export default function StatusBadge({ status }) {
   return <span className={`badge badge-${status.toLowerCase()}`}>{STATUS_LABEL[status]}</span>

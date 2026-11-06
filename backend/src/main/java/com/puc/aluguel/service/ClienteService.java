@@ -4,9 +4,13 @@ import com.puc.aluguel.dto.AtualizarClienteRequest;
 import com.puc.aluguel.dto.ClienteResponse;
 import com.puc.aluguel.dto.RendimentoRequest;
 import com.puc.aluguel.exception.RecursoNaoEncontradoException;
+import com.puc.aluguel.exception.RegraNegocioException;
 import com.puc.aluguel.model.Cliente;
 import com.puc.aluguel.model.Rendimento;
+import com.puc.aluguel.model.StatusPedido;
 import com.puc.aluguel.repository.ClienteRepository;
+import com.puc.aluguel.repository.PedidoRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,9 +24,11 @@ import java.util.List;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final PedidoRepository pedidoRepository;
 
-    public ClienteService(ClienteRepository clienteRepository) {
+    public ClienteService(ClienteRepository clienteRepository, PedidoRepository pedidoRepository) {
         this.clienteRepository = clienteRepository;
+        this.pedidoRepository = pedidoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -47,8 +53,11 @@ public class ClienteService {
     @Transactional
     public void remover(String login) {
         Cliente cliente = buscar(login);
-        // US08: quando os pedidos existirem, bloquear remoção de cliente com pedido ativo.
-        // O vínculo será adicionado junto da entidade Pedido (próxima etapa).
+        // US08: não é permitido remover cliente com pedidos ativos.
+        if (pedidoRepository.existsByClienteIdAndStatusIn(cliente.getId(), StatusPedido.ATIVOS)) {
+            throw new RegraNegocioException(HttpStatus.CONFLICT,
+                    "Não é possível remover: há pedidos ativos (Pendente, Em análise ou Aprovado).");
+        }
         clienteRepository.delete(cliente);
     }
 

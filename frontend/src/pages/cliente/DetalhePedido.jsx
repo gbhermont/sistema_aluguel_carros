@@ -1,31 +1,72 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import StatusBadge from '../../components/StatusBadge.jsx'
+import { formatarData, podeCancelar, podeClienteModificar } from '../../services/format.js'
 import {
-  automoveis, formatarData, getAutomovel, getPedido, podeCancelar, podeClienteModificar,
-} from '../../services/mockData.js'
+  cancelarPedido, consultarMeuPedido, listarAutomoveisDisponiveis, modificarPedido,
+} from '../../services/pedidoService.js'
 
 // UC06, UC07, UC08 / US10, US11, US12 — Ver, modificar e cancelar pedido.
 export default function DetalhePedido() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const pedido = getPedido(id)
+  const [pedido, setPedido] = useState(null)
+  const [disponiveis, setDisponiveis] = useState([])
+  const [selecionado, setSelecionado] = useState(null)
+  const [erro, setErro] = useState('')
+  const [acao, setAcao] = useState(false)
 
-  if (!pedido) {
-    return <p>Pedido não encontrado. <Link to="/cliente/pedidos">Voltar</Link></p>
-  }
+  useEffect(() => {
+    consultarMeuPedido(id)
+      .then((p) => {
+        setPedido(p)
+        setSelecionado(p.automovel.id)
+      })
+      .catch((e) => setErro(e.message))
+  }, [id])
 
-  const auto = getAutomovel(pedido.automovelId)
-  const editavel = podeClienteModificar(pedido.status)
-  const opcoes = automoveis.filter((a) => a.disponivel || a.id === pedido.automovelId)
+  // Carrega automóveis disponíveis só quando o pedido é editável.
+  useEffect(() => {
+    if (pedido && podeClienteModificar(pedido.status)) {
+      listarAutomoveisDisponiveis().then(setDisponiveis).catch(() => setDisponiveis([]))
+    }
+  }, [pedido])
 
-  function salvar(e) {
+  async function salvar(e) {
     e.preventDefault()
-    navigate('/cliente/pedidos')
+    setErro('')
+    setAcao(true)
+    try {
+      await modificarPedido(id, selecionado)
+      navigate('/cliente/pedidos')
+    } catch (err) {
+      setErro(err.message)
+      setAcao(false)
+    }
   }
 
-  function cancelar() {
-    if (window.confirm(`Cancelar o pedido #${pedido.id}?`)) navigate('/cliente/pedidos')
+  async function cancelar() {
+    if (!window.confirm(`Cancelar o pedido #${pedido.id}?`)) return
+    setErro('')
+    setAcao(true)
+    try {
+      await cancelarPedido(id)
+      navigate('/cliente/pedidos')
+    } catch (err) {
+      setErro(err.message)
+      setAcao(false)
+    }
   }
+
+  if (erro && !pedido) {
+    return <p className="error" role="alert">{erro} <Link to="/cliente/pedidos">Voltar</Link></p>
+  }
+  if (!pedido) return <p className="loading">Carregando...</p>
+
+  const auto = pedido.automovel
+  const editavel = podeClienteModificar(pedido.status)
+  // Garante que o automóvel atual apareça na lista mesmo se já não estiver "disponível".
+  const opcoes = disponiveis.some((a) => a.id === auto.id) ? disponiveis : [auto, ...disponiveis]
 
   return (
     <section>
@@ -33,6 +74,8 @@ export default function DetalhePedido() {
         <h1>Pedido #{pedido.id}</h1>
         <StatusBadge status={pedido.status} />
       </div>
+
+      {erro && <p className="error" role="alert">{erro}</p>}
 
       <div className="card">
         <dl className="details">
@@ -47,13 +90,13 @@ export default function DetalhePedido() {
         <form className="card" onSubmit={salvar}>
           <h2>Modificar pedido</h2>
           <label htmlFor="automovel">Automóvel</label>
-          <select id="automovel" defaultValue={pedido.automovelId}>
+          <select id="automovel" value={selecionado ?? ''} onChange={(e) => setSelecionado(Number(e.target.value))}>
             {opcoes.map((a) => (
               <option key={a.id} value={a.id}>{a.marca} {a.modelo} · {a.placa}</option>
             ))}
           </select>
           <div className="actions">
-            <button type="submit" className="btn btn-primary">Salvar alterações</button>
+            <button type="submit" className="btn btn-primary" disabled={acao}>Salvar alterações</button>
           </div>
         </form>
       ) : (
@@ -63,7 +106,7 @@ export default function DetalhePedido() {
       <div className="actions">
         <Link to="/cliente/pedidos" className="btn btn-secondary">Voltar</Link>
         {podeCancelar(pedido.status) && (
-          <button type="button" className="btn btn-danger" onClick={cancelar}>Cancelar pedido</button>
+          <button type="button" className="btn btn-danger" onClick={cancelar} disabled={acao}>Cancelar pedido</button>
         )}
       </div>
     </section>

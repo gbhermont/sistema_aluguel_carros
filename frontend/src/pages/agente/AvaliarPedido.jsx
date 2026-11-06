@@ -1,26 +1,48 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import StatusBadge from '../../components/StatusBadge.jsx'
-import { useAuth } from '../../hooks/useAuth.jsx'
+import { formatarData } from '../../services/format.js'
 import {
-  cliente, formatarData, formatarMoeda, getAutomovel, getPedido,
-} from '../../services/mockData.js'
+  consultarPedidoAgente, executarContrato, iniciarAnalise, registrarParecer,
+} from '../../services/pedidoService.js'
 
-// UC09, UC10, UC11, UC14 / US13, US14, US15, US18 — Análise financeira, parecer,
-// execução do contrato e (se banco) concessão de crédito.
+// UC09, UC10, UC14 / US13, US14 — Análise financeira, parecer e execução do contrato.
 export default function AvaliarPedido() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { usuario } = useAuth()
-  const pedido = getPedido(id)
+  const [pedido, setPedido] = useState(null)
+  const [parecer, setParecer] = useState('')
+  const [erro, setErro] = useState('')
+  const [acao, setAcao] = useState(false)
 
-  if (!pedido) {
-    return <p>Pedido não encontrado. <Link to="/agente/pedidos">Voltar</Link></p>
+  function carregar() {
+    return consultarPedidoAgente(id).then(setPedido).catch((e) => setErro(e.message))
   }
 
-  const auto = getAutomovel(pedido.automovelId)
-  const rendaTotal = cliente.rendimentos.reduce((s, r) => s + r.valor, 0)
-  const isBanco = usuario.tipoAgente === 'BANCO'
-  const voltar = () => navigate('/agente/pedidos')
+  useEffect(() => {
+    carregar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  async function executar(fn) {
+    setErro('')
+    setAcao(true)
+    try {
+      const atualizado = await fn()
+      setPedido(atualizado)
+    } catch (err) {
+      setErro(err.message)
+    } finally {
+      setAcao(false)
+    }
+  }
+
+  if (erro && !pedido) {
+    return <p className="error" role="alert">{erro} <Link to="/agente/pedidos">Voltar</Link></p>
+  }
+  if (!pedido) return <p className="loading">Carregando...</p>
+
+  const auto = pedido.automovel
   const { status } = pedido
 
   return (
@@ -30,100 +52,49 @@ export default function AvaliarPedido() {
         <StatusBadge status={status} />
       </div>
 
-      <div className="grid-2">
-        <div className="card">
-          <h2>Contratante</h2>
-          <dl className="details">
-            <dt>Nome</dt><dd>{cliente.nome}</dd>
-            <dt>CPF</dt><dd>{cliente.cpf}</dd>
-            <dt>RG</dt><dd>{cliente.rg}</dd>
-            <dt>Profissão</dt><dd>{cliente.profissao}</dd>
-            <dt>Endereço</dt><dd>{cliente.endereco}</dd>
-          </dl>
-          <h3>Rendimentos</h3>
-          <ul className="plain">
-            {cliente.rendimentos.map((r) => (
-              <li key={r.id}>{r.entidadeEmpregadora}: {formatarMoeda(r.valor)}</li>
-            ))}
-          </ul>
-          <p><strong>Renda total:</strong> {formatarMoeda(rendaTotal)}</p>
-        </div>
+      {erro && <p className="error" role="alert">{erro}</p>}
 
-        <div className="card">
-          <h2>Pedido</h2>
-          <dl className="details">
-            <dt>Automóvel</dt><dd>{auto.marca} {auto.modelo} ({auto.ano})</dd>
-            <dt>Placa / Matrícula</dt><dd>{auto.placa} / {auto.matricula}</dd>
-            <dt>Criado em</dt><dd>{formatarData(pedido.dataCriacao)}</dd>
-            <dt>Parecer</dt><dd>{pedido.parecer || <span className="muted">—</span>}</dd>
-          </dl>
-        </div>
+      <div className="card">
+        <h2>Dados do pedido</h2>
+        <dl className="details">
+          <dt>Cliente</dt><dd>{pedido.clienteNome}</dd>
+          <dt>Automóvel</dt><dd>{auto.marca} {auto.modelo} ({auto.ano})</dd>
+          <dt>Placa / Matrícula</dt><dd>{auto.placa} / {auto.matricula}</dd>
+          <dt>Criado em</dt><dd>{formatarData(pedido.dataCriacao)}</dd>
+          <dt>Parecer</dt><dd>{pedido.parecer || <span className="muted">—</span>}</dd>
+        </dl>
       </div>
 
       {status === 'PENDENTE' && (
         <div className="card">
           <h2>Análise financeira</h2>
           <p className="muted">Iniciar a análise muda o status para Em análise.</p>
-          <button type="button" className="btn btn-primary" onClick={voltar}>Iniciar análise</button>
+          <button type="button" className="btn btn-primary" disabled={acao}
+            onClick={() => executar(() => iniciarAnalise(id))}>Iniciar análise</button>
         </div>
       )}
 
       {status === 'EM_ANALISE' && (
-        <form className="card" onSubmit={(e) => { e.preventDefault(); voltar() }}>
+        <form className="card" onSubmit={(e) => { e.preventDefault() }}>
           <h2>Emitir parecer</h2>
           <label htmlFor="parecer">Parecer</label>
-          <textarea id="parecer" rows="3" required />
+          <textarea id="parecer" rows="3" value={parecer} onChange={(e) => setParecer(e.target.value)} required />
           <div className="actions">
-            <button type="submit" className="btn btn-danger" name="decisao" value="REPROVADO">Reprovar</button>
-            <button type="submit" className="btn btn-primary" name="decisao" value="APROVADO">Aprovar</button>
+            <button type="button" className="btn btn-danger" disabled={acao}
+              onClick={() => executar(() => registrarParecer(id, false, parecer))}>Reprovar</button>
+            <button type="button" className="btn btn-primary" disabled={acao}
+              onClick={() => executar(() => registrarParecer(id, true, parecer))}>Aprovar</button>
           </div>
         </form>
       )}
 
       {status === 'APROVADO' && (
-        <form className="card" onSubmit={(e) => { e.preventDefault(); voltar() }}>
+        <div className="card">
           <h2>Executar contrato</h2>
-          <div className="grid-2">
-            <div>
-              <label htmlFor="propriedade">Propriedade do automóvel</label>
-              <select id="propriedade" required defaultValue="EMPRESA">
-                <option value="CLIENTE">Cliente</option>
-                <option value="EMPRESA">Empresa</option>
-                <option value="BANCO">Banco</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="valorTotal">Valor total (R$)</label>
-              <input id="valorTotal" type="number" min="0" step="0.01" required />
-            </div>
-          </div>
-          <div className="actions">
-            <button type="submit" className="btn btn-primary">Executar contrato</button>
-          </div>
-        </form>
-      )}
-
-      {isBanco && (status === 'EM_ANALISE' || status === 'APROVADO') && (
-        <form className="card" onSubmit={(e) => { e.preventDefault(); voltar() }}>
-          <h2>Conceder contrato de crédito</h2>
-          <div className="grid-3">
-            <div>
-              <label htmlFor="valorFin">Valor financiado (R$)</label>
-              <input id="valorFin" type="number" min="0" step="0.01" required />
-            </div>
-            <div>
-              <label htmlFor="parcelas">Parcelas</label>
-              <input id="parcelas" type="number" min="1" required />
-            </div>
-            <div>
-              <label htmlFor="juros">Taxa de juros (% a.m.)</label>
-              <input id="juros" type="number" min="0" step="0.01" required />
-            </div>
-          </div>
-          <div className="actions">
-            <button type="submit" className="btn btn-primary">Conceder crédito</button>
-          </div>
-        </form>
+          <p className="muted">Concretiza o aluguel e muda o status para Executado.</p>
+          <button type="button" className="btn btn-primary" disabled={acao}
+            onClick={() => executar(() => executarContrato(id))}>Executar contrato</button>
+        </div>
       )}
 
       {(status === 'EXECUTADO' || status === 'REPROVADO' || status === 'CANCELADO') && (
