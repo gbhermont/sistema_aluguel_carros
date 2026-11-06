@@ -19,7 +19,7 @@ export default function AvaliarPedido() {
 
   const auto = getAutomovel(pedido.automovelId)
   const rendaTotal = cliente.rendimentos.reduce((s, r) => s + r.valor, 0)
-  const isBanco = usuario.tipo === 'BANCO'
+  const isBanco = usuario.tipoAgente === 'BANCO'
   const voltar = () => navigate('/agente/pedidos')
   const { status } = pedido
 

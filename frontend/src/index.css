@@ -123,3 +123,6 @@ tbody tr:last-child td { border-bottom: none; }
   .grid-2, .grid-3, .grid-rend { grid-template-columns: 1fr; }
   .topbar nav { order: 3; width: 100%; }
 }
+
+.loading { padding: 2rem; text-align: center; color: var(--muted); }
+.small { font-size: .85rem; }

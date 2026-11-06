@@ -6,17 +6,23 @@ import { useAuth } from '../hooks/useAuth.jsx'
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [loginEmail, setLoginEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  function entrar(e) {
+  async function entrar(e) {
     e.preventDefault()
-    if (!login(email)) {
-      setErro('Usuário ou senha inválidos.')
-      return
+    setErro('')
+    setEnviando(true)
+    try {
+      await login({ login: loginEmail, senha })
+      navigate('/')
+    } catch (err) {
+      setErro(err.message)
+    } finally {
+      setEnviando(false)
     }
-    navigate('/')
   }
 
   return (
@@ -27,7 +33,7 @@ export default function Login() {
 
         <label htmlFor="email">Usuário (e-mail)</label>
         <input id="email" type="email" autoComplete="username" required
-          value={email} onChange={(e) => setEmail(e.target.value)} />
+          value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
 
         <label htmlFor="senha">Senha</label>
         <input id="senha" type="password" autoComplete="current-password" required
@@ -35,15 +41,12 @@ export default function Login() {
 
         {erro && <p className="error" role="alert">{erro}</p>}
 
-        <button type="submit" className="btn btn-primary">Entrar</button>
+        <button type="submit" className="btn btn-primary" disabled={enviando}>
+          {enviando ? 'Entrando...' : 'Entrar'}
+        </button>
         <p className="muted center">
           Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
         </p>
-
-        <div className="hint" aria-label="Usuários de demonstração">
-          <strong>Protótipo:</strong> use qualquer senha com
-          <code>cliente@email.com</code>, <code>empresa@email.com</code> ou <code>banco@email.com</code>.
-        </div>
       </form>
     </div>
   )

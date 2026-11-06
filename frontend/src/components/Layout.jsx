@@ -30,7 +30,7 @@ export default function Layout() {
         <div className="user">
           <span>
             {usuario.nome}
-            <small> ({isCliente ? 'Cliente' : `Agente ${usuario.tipo === 'BANCO' ? 'Banco' : 'Empresa'}`})</small>
+            <small> ({isCliente ? 'Cliente' : `Agente ${usuario.tipoAgente === 'BANCO' ? 'Banco' : 'Empresa'}`})</small>
           </span>
           <button type="button" className="btn btn-link" onClick={sair}>Sair</button>
         </div>

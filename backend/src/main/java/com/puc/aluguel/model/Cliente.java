@@ -52,6 +52,22 @@ public class Cliente extends Usuario {
         rendimentos.add(rendimento);
     }
 
+    /** Atualiza os dados cadastrais editáveis (login, CPF e RG são imutáveis). */
+    public void atualizarDados(String nome, String endereco, String profissao) {
+        setNome(nome);
+        this.endereco = endereco;
+        this.profissao = profissao;
+    }
+
+    /** Substitui a lista de rendimentos, respeitando o limite máximo. */
+    public void substituirRendimentos(List<Rendimento> novos) {
+        if (novos.size() > MAX_RENDIMENTOS) {
+            throw new IllegalStateException("Cliente pode ter no máximo " + MAX_RENDIMENTOS + " rendimentos.");
+        }
+        rendimentos.clear();
+        novos.forEach(this::adicionarRendimento);
+    }
+
     public String getRg() { return rg; }
     public String getCpf() { return cpf; }
     public String getEndereco() { return endereco; }
