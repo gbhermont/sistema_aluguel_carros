@@ -47,6 +47,42 @@ O sistema armazena dados dos contratantes (RG, CPF, nome, endereço), profissão
 
 ---
 
+## 🎯 Escopo da Atividade (Lab 02)
+
+Conforme o enunciado, o processo de desenvolvimento tem estas etapas:
+
+| Etapa | Entrega | Situação |
+| :--- | :--- | :--- |
+| Modelagem | Casos de Uso, Histórias de Usuário, Diagrama de Classes e de Pacotes | ✅ Revisada |
+| Autenticação | Login de clientes e agentes; acesso restrito a usuários cadastrados | ✅ Implementada |
+| CRUD de Cliente | Spring Boot + React/Vite + Supabase, em MVC | ✅ Implementado |
+| Protótipo | Usuários criam e visualizam o **status** de um pedido de aluguel | ✅ Implementado |
+| Revisão dos diagramas | Atualização contínua conforme o feedback em aula | 🔄 Contínua |
+
+As demais funcionalidades implementadas (análise financeira e execução do contrato pelo agente)
+complementam o núcleo exigido. A associação de contrato de crédito segue apenas modelada.
+
+### Execução local (perfil `dev`)
+
+Para rodar o back-end sem Supabase, use o perfil `dev`, que sobe um banco **H2** em memória
+e cria dados de exemplo (agentes e automóveis):
+
+```bash
+cd backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Usuários pré-cadastrados nesse perfil (senha padrão `agente123`):
+
+| Login | Perfil |
+| :--- | :--- |
+| `empresa@email.com` | Agente (empresa) |
+| `banco@email.com` | Agente (banco) |
+
+Clientes são criados pela tela de cadastro.
+
+---
+
 ## ✨ Funcionalidades Principais
 
 - 🔐 **Autenticação Segura:** login obrigatório para clientes e agentes.

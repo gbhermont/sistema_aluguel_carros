@@ -5,8 +5,8 @@ O diagrama é escrito em **Mermaid**, que o GitHub renderiza automaticamente.
 
 ## Atores
 - **Cliente** — usuário individual que gerencia seus pedidos de aluguel.
-- **Agente** — empresas e bancos que avaliam e executam pedidos.
-- **Banco** — tipo de agente especializado na concessão de crédito (herda de Agente).
+- **Agente** — empresas e bancos que avaliam, modificam e executam pedidos.
+- **Agente Banco** — Agente com `tipo = BANCO`, especializado na concessão de crédito (especialização no diagrama; no modelo de classes é o atributo `TipoAgente`).
 
 ## Diagrama
 
@@ -15,7 +15,7 @@ flowchart LR
     %% Atores
     cliente(("👤 Cliente"))
     agente(("🏢 Agente"))
-    banco(("🏦 Banco"))
+    banco(("🏦 Agente Banco"))
 
     %% Casos de uso
     subgraph Sistema de Aluguel de Carros
@@ -30,6 +30,7 @@ flowchart LR
         UC07["Modificar pedido"]
         UC08["Cancelar pedido"]
 
+        UC14["Modificar pedido<br/>(como Agente)"]
         UC09["Analisar pedido<br/>(financeiramente)"]
         UC10["Avaliar / Executar contrato"]
         UC11["Associar contrato de crédito"]
@@ -53,6 +54,7 @@ flowchart LR
     agente --> UC02
     agente --> UC03
     agente --> UC09
+    agente --> UC14
     agente --> UC10
     agente --> UC12
 
@@ -83,7 +85,7 @@ flowchart TB
 
 | ID | Caso de Uso | Ator principal | Pré-condição |
 | :-- | :--- | :--- | :--- |
-| UC01 | Cadastrar-se | Cliente/Agente | — |
+| UC01 | Cadastrar-se | Cliente | — (Agentes são pré-cadastrados) |
 | UC02 | Fazer Login | Todos | Estar cadastrado |
 | UC03 | Fazer Logout | Todos | Estar autenticado |
 | UC04 | Gerenciar dados de Cliente | Cliente | Autenticado |
@@ -93,6 +95,7 @@ flowchart TB
 | UC08 | Cancelar pedido | Cliente | Pedido não executado |
 | UC09 | Analisar pedido | Agente | Pedido PENDENTE |
 | UC10 | Avaliar / Executar contrato | Agente | Pedido APROVADO |
-| UC11 | Associar contrato de crédito | Banco | Pedido em análise/aprovado |
+| UC11 | Associar contrato de crédito | Agente Banco | Pedido em análise/aprovado |
 | UC12 | Gerenciar automóveis | Agente | Autenticado |
 | UC13 | Listar automóveis disponíveis | Cliente | Autenticado |
+| UC14 | Modificar pedido (como Agente) | Agente | Autenticado, pedido não executado |
