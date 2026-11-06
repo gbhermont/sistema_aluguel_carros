@@ -47,6 +47,23 @@ O sistema armazena dados dos contratantes (RG, CPF, nome, endereço), profissão
 
 ---
 
+## 🎯 Escopo da Atividade (Lab 02)
+
+Conforme o enunciado, o processo de desenvolvimento tem estas etapas:
+
+| Etapa | Entrega | Situação |
+| :--- | :--- | :--- |
+| Modelagem | Casos de Uso, Histórias de Usuário, Diagrama de Classes e de Pacotes | ✅ Revisada |
+| Autenticação | Login de clientes e agentes; acesso restrito a usuários cadastrados | ⏳ Pendente |
+| CRUD de Cliente | Spring Boot + React/Vite + Supabase, em MVC | ⏳ Pendente |
+| Protótipo | Usuários criam e visualizam o **status** de um pedido de aluguel | ⏳ Pendente |
+| Revisão dos diagramas | Atualização contínua conforme o feedback em aula | 🔄 Contínua |
+
+As demais funcionalidades (análise, execução de contrato, crédito e CRUD de automóveis) estão modeladas,
+mas são **complementares** ao núcleo exigido acima.
+
+---
+
 ## ✨ Funcionalidades Principais
 
 - 🔐 **Autenticação Segura:** login obrigatório para clientes e agentes.

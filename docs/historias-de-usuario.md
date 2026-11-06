@@ -10,8 +10,7 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 | Ator | Descrição |
 | :--- | :--- |
 | **Cliente** | Usuário individual que solicita aluguéis de automóveis. |
-| **Agente** | Empresa ou banco que avalia e executa pedidos (análise financeira e contratos). |
-| **Administrador** | Responsável por gerenciar usuários e dados de base do sistema (perfil opcional/suporte). |
+| **Agente** | Empresa ou banco que avalia, modifica e executa pedidos (análise financeira e contratos). Agentes do tipo banco também concedem crédito. |
 
 ---
 
@@ -24,7 +23,7 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 - O sistema exige nome, usuário (e-mail) e senha.
 - A senha é armazenada de forma segura (hash).
 - Não é permitido cadastrar usuário já existente.
-- Ao se cadastrar, o usuário escolhe/recebe um perfil (Cliente ou Agente).
+- O cadastro público cria sempre o perfil **Cliente**. Os Agentes são pré-cadastrados (carga inicial no banco).
 
 ### US02 — Login
 **Como** usuário cadastrado, **quero** autenticar com usuário e senha, **para** acessar as funcionalidades do sistema.
@@ -38,7 +37,7 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 **Como** usuário autenticado, **quero** encerrar minha sessão, **para** proteger meus dados.
 
 **Critérios de aceite:**
-- Após o logout, o token deixa de ser aceito.
+- O logout é *stateless*: o front-end descarta o token e o token possui expiração curta.
 - O usuário é redirecionado para a tela de login.
 
 ### US04 — Controle de acesso por perfil
@@ -125,6 +124,13 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 - Ao iniciar a análise, o status passa para EM_ANALISE.
 - O agente registra parecer positivo (APROVADO) ou negativo (REPROVADO).
 
+### US18 — Modificar pedido (Agente)
+**Como** Agente, **quero** modificar um pedido ainda não executado, **para** ajustar as condições durante a avaliação.
+
+**Critérios de aceite:**
+- Só é possível modificar pedidos que não estejam EXECUTADO ou CANCELADO.
+- Alterações registram data de atualização.
+
 ### US14 — Avaliar e executar contrato
 **Como** Agente, **quero** executar o contrato de um pedido aprovado, **para** concretizar o aluguel.
 
@@ -134,10 +140,10 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 - Define a propriedade do automóvel (cliente, empresa ou banco) conforme o tipo de contrato.
 
 ### US15 — Associar contrato de crédito
-**Como** Agente (banco), **quero** associar um contrato de crédito ao aluguel, **para** financiar a operação.
+**Como** Agente do tipo banco, **quero** associar um contrato de crédito ao aluguel, **para** financiar a operação.
 
 **Critérios de aceite:**
-- O contrato de crédito é concedido por um banco agente.
+- O contrato de crédito só pode ser concedido por um Agente com `tipo = BANCO`.
 - O crédito fica vinculado ao pedido/contrato de aluguel.
 
 ---
@@ -155,4 +161,4 @@ Cada história possui critérios de aceite para orientar o desenvolvimento e os 
 **Como** Cliente, **quero** listar os automóveis disponíveis, **para** escolher qual alugar.
 
 **Critérios de aceite:**
-- A listagem exibe apenas automóveis não comprometidos em contratos executados.
+- A listagem exibe apenas automóveis sem contrato executado (disponibilidade derivada, não armazenada).
